@@ -208,7 +208,9 @@ WORKFLOW.txt includes a section for user preferences that grows through use. Whe
 
 A general strategy for any content that accumulates and is consulted selectively: an index file that describes what's available, plus a collection of small files each covering one item or topic.
 
-Like a card catalog in a library. Read the index to know what's available, pull only what you need. Cost is ~1 KB for the index read plus the one file you actually need, regardless of how large the collection grows. Compare to a monolithic file that must be read in full every time and grows without bound.
+Monolithic files are a context cost time bomb. A single lessons file or reference document is fine when it has five entries. At fifty entries it costs thousands of tokens every time it's read, and every read stays in context for the entire conversation. Files that grow by accretion will eventually consume a meaningful share of the context window just to look up one item.
+
+The indexed pattern avoids this. Like a card catalog in a library, read the index to know what's available, then pull only the file you need. Cost is ~1 KB for the index read plus the one file you actually need, regardless of how large the collection grows. Adding a new entry costs ~1.5 KB of context (read index, read one topic file, write the update). Compare to reading and rewriting a monolithic file that grows without bound.
 
 This pattern applies anywhere items accumulate and get looked up selectively: operational lessons, case evidence, research sources, reference materials, design decisions.
 
@@ -302,9 +304,13 @@ The WORKFLOW.txt must include an explicit activation sequence for each Extended 
 
 ## Task Queues
 
-Active items only. When a task is completed, remove it from the queue and note completion in the session log. The session log is the archive. No DONE section, no archive file.
+Active items only. When a task is completed, remove it from the queue and note completion in the session log. The session log is the archive. No DONE section, no archive file. A DONE section or archive creates a growing document that must be read and rewritten every time a task is completed. The context cost of maintaining an archive exceeds its value, since the session logs already contain the completion record.
 
 On-demand reads, not startup. The handoff can include a top-priority nudge so startup is priority-aware without loading the full queue.
+
+Task queues take different shapes depending on the work. A priority queue lists what to work on next, organized by urgency or category (active, follow-up, backlog). A living checklist tracks items being worked through during a session, with items checked off as they're completed. Both are valid. Some projects use one, some the other, some both for different purposes.
+
+Complex projects may need multiple task queues split by function or sub-project. Each queue stays focused on its domain and stays small. The alternative (one large combined queue) creates a file that grows beyond what any single session needs, costing context to read items irrelevant to the current work.
 
 ---
 
