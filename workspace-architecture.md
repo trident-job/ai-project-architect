@@ -35,7 +35,7 @@ This document describes a workspace architecture that balances orientation quali
     TASKS.txt               active items only, on-demand.
     Clock/timestamp.txt     temporal awareness
     Config/
-      PROJECT_INSTRUCTIONS.txt
+      PROJECT_INSTRUCTIONS.txt  backup for portability
     Lessons/                operational knowledge
       LESSONS_INDEX.txt     routing index
       [topic].txt           one file per topic
@@ -123,6 +123,8 @@ time Desktop access is available.
 ```
 
 The user pastes this once and never updates it. All evolution happens in filesystem files that the AI maintains directly.
+
+A backup copy lives in the workspace at Config/PROJECT_INSTRUCTIONS.txt. This makes the project fully portable: everything needed to recreate the project in a new account, on a different device, or for another person lives on the filesystem. The AI can also reference this backup to verify its own instructions if needed.
 
 The three-block structure exists because AI assistants will skip evaluating implicit conditions. "When Filesystem is available" requires the AI to have already determined availability, but nothing forces that check. The fix: make the check an unconditional first action ("At session startup, check whether Filesystem tools are available"), then branch on the result. See INSTRUCTION COMPOSITION below.
 
