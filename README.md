@@ -20,6 +20,32 @@ The design is optimized for a core constraint: everything the AI reads at startu
 
 The result: the AI picks up exactly where you left off in every new chat, maintains its own session logs and documentation, knows what time it is and how long it's been since you last worked together, and keeps startup reads around 15 KB (down from 50+ KB before optimizing).
 
+## What you get
+
+**Continuity across chats.** Every new conversation picks up where the last one left off. No re-explaining your project, your preferences, or what you were working on.
+
+**Context cost optimization.** Startup reads ~15 KB instead of 50+. Chats stay responsive longer because the AI isn't burning context on unnecessary history.
+
+**Temporal awareness.** The AI knows what day and time it is and how long since your last session. It can reason about deadlines, weekdays, and whether you've been away for an hour or a week.
+
+**Proactive documentation.** The AI logs decisions, reasoning, and state changes as you work, without being asked. If a chat ends unexpectedly, nothing is lost.
+
+**Asynchronous intake.** Drop files in the project inbox between sessions. The AI notices them when you return and processes them in context.
+
+**Accumulated knowledge.** Operational lessons, reference materials, and project-specific knowledge grow over time without ballooning context cost.
+
+**Task delegation.** Hand off mechanical work (file organization, indexing, batch processing) to agentic tools sharing the same filesystem. Chat retains strategic oversight.
+
+**Sub-project organization.** Multiple workstreams in one project, each with their own reference files and structure shaped by the domain.
+
+**Portability.** The entire project lives on the filesystem, including the instructions for setting it up. Recreate it on a new account, a different device, or for someone else.
+
+**Multi-project coordination.** Optional coordinator project with a shared knowledge base. Projects discover techniques independently and publish them for others to adopt.
+
+**Graceful degradation.** Full features on desktop. On web or mobile, chats note what needs syncing when you're back.
+
+**Preference learning.** The project accumulates your working preferences over time and applies them automatically.
+
 ## The workspace structure
 
 Every project follows the same layout:
