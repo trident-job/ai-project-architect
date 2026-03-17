@@ -1,0 +1,130 @@
+# Temporal Awareness for AI Assistants
+
+A pattern for AI projects that use filesystem access.
+
+---
+
+## The Problem
+
+AI assistants have no internal sense of time within a conversation. Every message feels like it arrived moments after the last one, whether five seconds or five hours have actually passed. In a long chat that spans a full day or multiple days, this creates blind spots:
+
+The AI doesn't know that the human left and came back. It can't tell whether an update is part of the same work session or a new one hours later. Session logs and documentation lack temporal precision. When reviewing logs later, the actual timeline of events is invisible. And the AI can't make sensible decisions about when to close out a log entry versus append to one.
+
+This matters because the filesystem is a long-term record. Logs without timestamps collapse everything into a flat sequence that obscures the real pace and rhythm of work.
+
+---
+
+## The Solution
+
+Temporal awareness has two components, both essential:
+
+1. **What time is it now?**
+2. **How long has it been since the last session?**
+
+The first gives you the current moment. The second gives you context: is this a continuation from an hour ago, or a return after three days? Both inform how the AI orients to the work. A project that knows it's Friday afternoon but doesn't know the last session was Monday morning is missing half the picture.
+
+The mechanism: a persistent Clock file and a filesystem metadata call. The Clock file lives permanently in the project directory. The AI edits it (add or remove a word) and then reads the modified timestamp. The most recent session log's metadata provides the second component. No throwaway files, no cleanup needed.
+
+**Critical distinction:** Reading metadata on an old file tells you when *that file* was written, not what time it is now. Only a freshly modified file reflects the actual current time.
+
+**Important (macOS):** Read only the "modified" field from file metadata. Ignore the "created" field. On macOS APFS, "created" is the file's birth time and never updates after initial creation. If the Clock file was created on a Monday and edited on a Wednesday, "created" still says Monday. Only "modified" reflects the edit.
+
+---
+
+## Setup
+
+Create a Clock directory in your project's Workflow Files with a single text file inside it:
+
+```
+[project base path]/Workflow Files/Clock/timestamp.txt
+```
+
+Contents can be anything. A description like "This file exists so the AI can check the current time" works. The file is permanent and reusable. Never delete it.
+
+---
+
+## Implementation
+
+### 1. Knowing What Time It Is Now
+
+1. Edit the Clock file (add or remove a word, toggle between "tick" and "tock", anything that changes the content)
+2. Read the file's metadata (e.g., `get_file_info` from Claude's Filesystem extension)
+3. Read the "modified" field only (ignore "created")
+4. Compare the returned date to the system prompt date. If the Clock returns a date earlier than the system prompt date, the reading is stale. Repeat steps 1-3 once more
+
+The first read of a session may return stale metadata from a prior session's edit due to filesystem caching. The sanity check against the system prompt date catches this without requiring an external time reference.
+
+Do not create throwaway files. Do not rely on metadata from files written in previous exchanges.
+
+### 2. Knowing When the Last Action Happened
+
+Read the file metadata on the most recent log file or the last file written in a previous exchange. That timestamp tells you when the previous work session happened.
+
+### 3. Detecting Time Gaps (Baseline Startup Behavior)
+
+At session startup, after checking the Clock, read the metadata on the most recent session log. Compare its modified timestamp to the current time from the Clock. The difference tells you how long it's been since the last session.
+
+This is not optional. Every startup should produce both the current time and the time since last session. The gap informs orientation: a return after three days means more may have changed than a continuation from an hour ago. It also informs logging: whether to append to a current entry or start a new one.
+
+Within a single long chat, the same technique detects when the human left and came back. Check the Clock when activity resumes; compare to the last file write. If hours have passed, you're in a new work session within the same chat.
+
+### 4. File Metadata as Context
+
+When processing files the human drops in an inbox or working directory, the modified timestamp on those files tells you when the human placed them there. Email files (.eml) also contain send/receive timestamps in their headers. Both sources help reconstruct the timeline of events that happened between work sessions.
+
+### 5. Cross-Referencing Timestamps
+
+Screenshot filenames often contain timestamps (e.g. "Screenshot 2026-03-06 at 16.51.22.png"). Email headers contain send times. PDF metadata may contain creation dates. These all serve as independent time references when file metadata alone isn't sufficient.
+
+---
+
+## Copy-Paste Implementation for WORKFLOW.txt
+
+Adapt this to your project's logging system. The example uses tool names from Claude's Filesystem extension; substitute the equivalent for your AI platform.
+
+```
+TIMESTAMPS AND TEMPORAL AWARENESS
+
+The AI has no internal clock. To know the current time,
+use the Clock file:
+
+  Workflow Files/Clock/timestamp.txt
+
+Process:
+  1. Edit the file (add or remove a word)
+  2. Read the file's metadata
+  3. Read the "modified" field only. Ignore "created"
+     (macOS APFS "created" is birth time, never updates)
+  4. Compare the returned date to the system prompt date.
+     If the Clock returns a date earlier than the system
+     prompt date, the reading is stale. Repeat steps
+     1-3 once more
+
+The file is persistent and reusable. Never delete it.
+Reading metadata on an old file tells you when THAT FILE
+was written, not what time it is now. Only a freshly
+modified file reflects the actual current time.
+
+At startup, also check the most recent session log's
+modified time. Compare it to the Clock reading to
+determine how long since the last session. Both the
+current time and the time gap are baseline startup
+information. Note both when greeting the user.
+
+When writing log entries, include timestamps derived
+from file metadata.
+
+Format: [date, ~time timezone] ENTRY HEADING
+```
+
+---
+
+## Limitations
+
+Timestamps are approximate. The time on a file reflects when the AI wrote it, not when the human sent the message that prompted it. There's usually a small delay (seconds to minutes) depending on how much work the AI does before writing a file.
+
+This only works with filesystem access (typically a desktop application). On mobile or web, the AI has no file metadata to work with and no temporal awareness.
+
+File metadata reflects the timezone of the machine, which is useful but means the AI needs to note the timezone in log entries.
+
+Within a single rapid exchange (messages seconds apart), the timestamps won't be meaningfully different. This is most useful for detecting gaps of minutes to hours.

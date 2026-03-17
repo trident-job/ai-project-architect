@@ -1,0 +1,350 @@
+# Workspace Architecture for Sustained Knowledge Work with AI
+
+A workspace architecture optimized for context cost and continuity.
+
+Developed through iterative design and daily use across multiple projects spanning different domains. Applicable to any project where an AI assistant serves one or more areas of ongoing work.
+
+---
+
+## The Problem
+
+Default AI project tools aren't designed for sustained knowledge work. Project knowledge files are static uploads. There is no session continuity: each conversation starts blank. There is no mechanism for the AI to maintain its own documentation, log sessions, or orient itself in ongoing work.
+
+The workspace pattern solves this by moving project knowledge to a living filesystem that the AI reads, writes, and maintains directly. But the workspace itself must be designed to work within context window constraints. Every file read at startup stays in context for the entire conversation and is retokenized every turn. A 50 KB startup across 20 turns means the startup content is processed roughly 20 times.
+
+This document describes a workspace architecture that balances orientation quality against context cost.
+
+---
+
+## The Structure
+
+```
+[Project]/
+  WORKFLOW.txt              startup procedure, project
+                            description, temporal awareness,
+                            logging guidance, user preferences.
+                            Only what earns its place in every
+                            context window.
+  Inbox/                    asynchronous intake (see below)
+  Workflow Files/           all project infrastructure
+    HANDOFF.txt             current state,
+                            priorities, reading pointers.
+                            Overwritten with every log entry.
+    REFERENCE.txt           on-demand detail: file structure,
+                            format specs, detailed procedures.
+    TASKS.txt               active items only, on-demand.
+    Clock/timestamp.txt     temporal awareness
+    Config/
+      PROJECT_INSTRUCTIONS.txt
+    Lessons/                operational knowledge
+      LESSONS_INDEX.txt     routing index
+      [topic].txt           one file per topic
+    Session Logs/           project-wide, on-demand
+      Session_XXX.txt       one per chat, area-tagged
+  [Sub-Project A]/          functional area
+    [REFERENCE].txt         domain-specific procedures
+    [domain folders]        shaped by the work
+  [Sub-Project B]/          ...
+```
+
+The root shows: what the project does (sub-project folders), the entry point (WORKFLOW.txt), user-facing interaction (Inbox/), and infrastructure tucked away (Workflow Files/). That's it.
+
+---
+
+## The Inbox
+
+Inbox/ at the project root is the asynchronous interface between the user and the project. The user drops files here between sessions: emails saved as text, documents to process, screenshots, reference material, delegation briefs, anything that a project needs to see. The project notices them at startup and asks about them.
+
+This is a foundational workflow: the user encounters something relevant, saves it to the appropriate project's inbox, and moves on. Later, when a session opens, the AI sees the item and initiates processing. The inbox bridges the gap between when work arrives and when the project is active.
+
+Inbox items are listed (filenames only) at startup as step 4. They are not read at startup. The listing surfaces what's waiting, and the chat processes items when directed or when relevant to the session's work.
+
+Inbox items may represent undocumented task entries, work that has arrived but hasn't been triaged into the project's task list or session log. If you use a coordinator project (see Knowledge Architecture below), its task review should include inbox listings for this reason.
+
+See INBOX PROCESSING in Key Principles for how to assess items once processing begins.
+
+---
+
+## Startup
+
+Startup reads four things:
+
+1. **WORKFLOW.txt** (~4-6 KB)
+2. **Workflow Files/HANDOFF.txt** (~1-2 KB)
+3. **Most recent session log** (~5-15 KB)
+4. **Inbox/ listing** (filenames only)
+
+Total: ~12-23 KB. Down from 30-55 KB under the old "read three most recent session logs" heuristic.
+
+The handoff gives the current state snapshot: where things stand per functional area, priorities, what to read for depth. The most recent session log gives the narrative: how things got to the current state, what was tried, what was decided and why. Together they orient a fresh chat to continue the work with both the snapshot and the story.
+
+The session log was added back after testing showed that handoff-only startup lost narrative continuity. A chat reading only the handoff knew what the current state was but not how it got there, causing it to fall back on stale memory and past chat search. One session log restores the narrative thread at modest cost (~5-15 KB) while still achieving 50-70% reduction from the old three-log startup.
+
+When writing a handoff after structural or meta work (like project optimization or file reorganization), note which earlier session contains the last domain work. The startup log may be about structural changes, not the actual work. The handoff pointer lets the chat load the domain narrative.
+
+For projects with multiple sub-projects or functional areas, each area's section in the handoff should include a "last active" pointer: the session number where that area was last worked, and the sub-project reference file to read for full state. This prevents sub-projects from becoming unresurfaceable when other areas dominate the work for extended periods. The FOR DEPTH section at the bottom of the handoff naturally scrolls past older sessions, but the sub-project pointer persists as long as the section exists.
+
+Example:
+
+```
+RESEARCH — LITERATURE REVIEW
+Next: finish annotating the second batch of sources.
+Last active: Session 012. For full state, read
+  Research/RESEARCH_STATUS.txt.
+```
+
+Once oriented, the chat loads additional session logs, sub-project reference files, lessons, and task queues on demand.
+
+The user already knows their project. They need orientation (where we left off, what's pending), not education (what each item is about).
+
+---
+
+## Project Instructions
+
+These go into your AI application's project settings. The path is the only variable. Identical for every project.
+
+The example below uses Claude Desktop's Filesystem extension. Adapt the tool names and syntax for other AI platforms that provide filesystem access.
+
+```
+Workspace: All project files live on the filesystem at [path]. At session
+startup, call Filesystem:list_allowed_directories to confirm filesystem
+access. Then call Filesystem:list_directory on the project path to confirm
+you can read it. These tools provide full read and write access to the
+project filesystem, including write_file, edit_file, move_file, and
+create_directory.
+
+When Filesystem is available, read WORKFLOW.txt and follow its procedures.
+
+When Filesystem is unavailable, let the user know and explain that the
+session will operate from project memory and conversation context.
+Capabilities will be limited compared to Desktop sessions. Note any
+decisions or information that should be synced to the filesystem next
+time Desktop access is available.
+```
+
+The user pastes this once and never updates it. All evolution happens in filesystem files that the AI maintains directly.
+
+The three-block structure exists because AI assistants will skip evaluating implicit conditions. "When Filesystem is available" requires the AI to have already determined availability, but nothing forces that check. The fix: make the check an unconditional first action ("At session startup, check whether Filesystem tools are available"), then branch on the result. See INSTRUCTION COMPOSITION below.
+
+---
+
+## Key Principles
+
+### Instruction Composition: Actions, Not Conditions
+
+Every instruction must be composed as explicit action sequences, not conditional triggers. AI assistants follow actions reliably. They do not reliably evaluate conditions before acting.
+
+"When X, do Y" assumes the AI will check X first. It often won't. "Do A to check X. If X, do Y" works because the check is itself an action. Sometimes the check needs a method: "Check if A is available by doing B."
+
+This applies at every level: project instructions, startup procedures, sub-project reference files, inbox checks, temporal awareness steps. Every conditional phrase ("when," "if," "once," "after") is a candidate for conversion into an explicit action step.
+
+Discovered through multiple iterations of the project instructions template. Each version was clear to a human reader. The problem was never clarity. It was the assumption that the AI processes instructions the way humans read them.
+
+### Directory Design Is UX Design
+
+The directory structure is a user interface. When someone opens the project folder, the visual hierarchy should communicate the project's organization without explanation. Sub-project folders tell you what the project does. Infrastructure is visually subordinate. Inbox is immediately accessible. WORKFLOW.txt is visible as the entry point.
+
+Naming: natural case (Inbox, not INBOX). ALLCAPS reads as system files in a file browser. Folder names should feel natural alongside the user's other directories.
+
+### Handoff-Driven Orientation
+
+Orientation and archive are separate functions that need separate files. Session logs are the archive. HANDOFF.txt is the orientation. Loading the archive at startup conflates the two and wastes context on historical content that doesn't help the current chat continue the work.
+
+HANDOFF.txt is overwritten with every log entry write, never deferred to session end. Sessions can end without warning (context limit, connection drop, user leaving). "End of session" is not a reliable trigger.
+
+Handoff notes flag known fragilities, not just steps. A task with hidden complexity needs a caution line naming the risk and pointing to documentation.
+
+### Lean Workflow, On-Demand Reference
+
+WORKFLOW.txt keeps only what earns its place in every context window: startup procedure, project description, temporal awareness, logging guidance, user preferences.
+
+Everything else (file structure listings, detailed format specs, procedural notes) moves to Workflow Files/REFERENCE.txt, read on demand. This separation keeps the startup read small while preserving access to detailed reference material.
+
+### Concise Logging
+
+Session logs capture every decision, state change, and rationale. They do not narrate the conversational process.
+
+Thoroughness applies to coverage (what is captured). Conciseness applies to expression (how it is written). These are not in tension.
+
+Good: "Moved Q1 reports into Client A sub-project. Reduces root clutter, reports are client-specific. Summary spreadsheet absorbed (same data, different format)."
+
+Unnecessary: "We discussed whether to keep the Q1 reports at root level. The user pointed out they're client-specific. We agreed moving them made more sense."
+
+Reasoning IS worth capturing when a decision might be revisited: "Chose X over Y because Z." Process narration ("first we considered A, then B") is not, unless the alternatives themselves are important context.
+
+Every time a log entry is written, also overwrite HANDOFF.txt. Both writes happen together.
+
+### Inbox Processing: Check Before Assessing
+
+Before assessing an inbox item, check the project's existing work structure (sub-projects, case folders, task queues, archives) for related items. A fresh chat has no memory of past work. Directory listings are the recognition mechanism. Without this step, a chat may treat a familiar item as new, failing to connect it to work the project has already done.
+
+### Proactive Logging
+
+Log without waiting to be asked. When substantive work has accumulated (file changes, decisions, analysis completed), write the session log and handoff. A missing entry means a future chat starts with a gap. An extra entry costs almost nothing.
+
+Logging is a checkpoint, not a conclusion. After writing a log entry, continue working. Do not summarize the session, prompt for next steps, or shift to a closing tone. The session continues until the user ends it.
+
+### Evolving State, Not Binary
+
+Topics that develop across sessions must be logged at their current state of progress, not as binary open/closed. A design question progresses: not yet discussed → context gathered → options identified → partially decided → resolved. Binary logging ("open questions") forces the next chat to restart from scratch on topics where significant work was done.
+
+Each in-progress item should capture: what information was gathered, what options were considered, where the person's thinking landed, and what specifically remains. This protects the human from repeating themselves. Their memory of conversational decisions fades between sessions just as the AI's context window ends.
+
+See the companion pattern: [Evolving State in Handoffs](patterns/evolving-state.md).
+
+### Session Logs Are Project-Wide
+
+One sequence, tagged by functional area. This maintains the project narrative and avoids duplicating logging infrastructure. Location: Workflow Files/Session Logs/.
+
+### User Preferences Accumulate
+
+WORKFLOW.txt includes a section for user preferences that grows through use. When the user corrects a behavior that reflects a persistent preference, the AI writes it immediately. The project learns its user over time.
+
+---
+
+## The Indexed Collection Pattern
+
+A general strategy for any content that accumulates and is consulted selectively: an index file that describes what's available, plus a collection of small files each covering one item or topic.
+
+Like a card catalog in a library. Read the index to know what's available, pull only what you need. Cost is ~1 KB for the index read plus the one file you actually need, regardless of how large the collection grows. Compare to a monolithic file that must be read in full every time and grows without bound.
+
+This pattern applies anywhere items accumulate and get looked up selectively: operational lessons, case evidence, research sources, reference materials, design decisions.
+
+Standing rule: any folder created to accumulate files gets an INDEX.txt at creation time, not retroactively. Creating it empty or with a placeholder costs nothing and ensures the pattern is never missed.
+
+The structure:
+
+```
+[Collection Folder]/
+  INDEX.txt (or LESSONS_INDEX.txt, etc.)
+  [item_1].txt
+  [item_2].txt
+  ...
+```
+
+Naming follows the domain. A case folder has Resources/ with INDEX.txt. Project-level operational knowledge has Lessons/ with LESSONS_INDEX.txt. A research project might have Sources/ with INDEX.txt. The pattern is the same; the naming adapts.
+
+---
+
+## Knowledge Architecture
+
+Knowledge flows upward through three levels:
+
+**Sub-project reference files:** Domain-specific knowledge managed by each sub-project in whatever form serves the work. A client management sub-project has case files and communication logs. A research sub-project has analytical frameworks and source annotations. These are living documents that capture the current state of the sub-project's thinking.
+
+**Project operational lessons:** Cross-cutting knowledge that any sub-project might need. Tool quirks, workarounds, migration procedures, context cost behavior. Centralized in Workflow Files/Lessons/ with an index routing to topical files. When a sub-project discovers something operationally useful, it surfaces here.
+
+**Shared knowledge base (optional):** Cross-project knowledge published as standalone entries. One project discovers a technique, documents it portably, publishes it. Other projects encounter it and adopt, adapt, or ignore it. This is how projects teach each other. Only relevant if you're running multiple projects.
+
+The direction is always upward: sub-project reference files → project Lessons/ → shared knowledge base. Each level is a different formalization with a broader audience.
+
+### Cross-Project Routing via Coordinator Inbox
+
+When a project chat discovers something cross-cutting during its own domain work, it doesn't need to know the shared knowledge base structure or make the routing decision itself. The pattern: the project chat packages the observation as a concise note (what was noticed, why it matters, where it might belong), and routes it to the coordinator project's inbox. The coordinator reads the note, decides where it belongs, places it, and clears the inbox.
+
+Not every cross-cutting observation warrants a new shared document. Many are feedback on existing infrastructure: a note that improves an existing doc, a line item for a project's lessons file, or a correction to a shared template. The routing mechanism is the same regardless of destination. The coordinator has the cross-project view to decide.
+
+The note should include: the observation itself, the source (which project and session), and a suggestion for where it might land. The suggestion is advisory. The coordinator may route it differently based on its view across all projects.
+
+---
+
+## Sub-Projects
+
+Each functional area gets its own directory at the project root. Inside, it has its own reference files and domain folders shaped by the nature of the work.
+
+Always create at least one sub-project folder, even for single-focus projects, to establish the pattern and avoid restructuring later.
+
+Sub-project structure depends on the shape of the work:
+
+- Cases that open and close (client work, support tickets, disputes)
+- Parallel ongoing projects (codebases, skill development)
+- Sequential progression (chapters, assignments, phases)
+- Themes or topics (research areas, product lines)
+- Individuals (clients, correspondents, students)
+
+Each shape implies different internal folders and reference file content.
+
+### Migration
+
+When a sub-project outgrows its parent project, it can be split into its own project. Build the new project's structure from inside the old project, move the directory, create the new AI project with the instructions template, move relevant chats, migrate session logs with provenance headers, update the old project. Migration is also an opportunity to add structure the work has grown into.
+
+### Archiving
+
+When a sub-project completes, it moves to Archive/ at the project root with a completion-date name (e.g., "Project Name - 2026-03"). The sub-project's status file gets a closing note before archiving. An ARCHIVE_INDEX.txt at the project root maintains an inventory of archived sub-projects for discoverability. Active sub-projects always live at root, never inside Archive/.
+
+See the companion pattern: [Sub-Project Archive Pattern](patterns/archive-pattern.md).
+
+### Sub-Project Complexity Tiers
+
+Sub-projects operate at one of two context tiers:
+
+**Standard:** The default. The sub-project's state is summarized in the project-level HANDOFF.txt. Its reference files load on demand when work begins. No additional orientation file needed.
+
+**Extended:** For sub-projects whose domain complexity requires richer orientation than a handoff summary can provide. The sub-project maintains its own orientation file (named distinctively, never HANDOFF.txt) with detailed state, open questions at their current stage of thinking, and reading pointers to its own reference materials.
+
+A sub-project starts at Standard by default. It can be designated Extended at creation if the scope is known, or promoted later when complexity emerges.
+
+Extended tier means permission for: longer orientation files, bigger session log entries for that area, more reference material. It does not mean abandoning the optimization principles. Concise logging, indexed collections, and on-demand loading all still apply. The ceiling is raised, not removed.
+
+### Loading Sequence for Extended Sub-Projects
+
+Startup and activation are separate loading steps.
+
+**Startup** (at session open): Read WORKFLOW.txt, HANDOFF.txt, most recent session log, Inbox listing. The project-level HANDOFF.txt carries a brief summary of each sub-project's state and a pointer to its orientation file.
+
+**Activation** (when user directs work to the sub-project): Read the sub-project's orientation file. Read the session log referenced in its "last active" pointer, if different from the session log already loaded at startup. Report sub-project state to the user and wait for direction.
+
+The WORKFLOW.txt must include an explicit activation sequence for each Extended sub-project, specifying the files to read and their order.
+
+---
+
+## Task Queues
+
+Active items only. When a task is completed, remove it from the queue and note completion in the session log. The session log is the archive. No DONE section, no archive file.
+
+On-demand reads, not startup. The handoff can include a top-priority nudge so startup is priority-aware without loading the full queue.
+
+---
+
+## Temporal Awareness
+
+AI assistants have no internal clock. Temporal awareness has two components, both baseline startup behaviors:
+
+1. **What time is it now?**
+2. **How long has it been since the last session?**
+
+The first gives the current moment. The second gives context: is this a return after three days or a continuation from an hour ago? Both inform orientation. Temporal awareness is not just knowing the time but reasoning about what it means for the work: day of week, business hours, calendar deadlines, how much may have changed.
+
+The mechanism uses a persistent Clock file (Workflow Files/Clock/timestamp.txt) and filesystem metadata. Each project's WORKFLOW.txt carries the implementation steps.
+
+See the companion pattern: [Temporal Awareness](patterns/temporal-awareness.md).
+
+---
+
+## Adopting This Structure
+
+### For New Projects
+
+Start with this structure even for single-function projects. Create one sub-project folder to establish the pattern. This avoids restructuring when the project expands.
+
+### For Existing Projects
+
+The existing structure works well for its scope. Migrate when the project grows or when starting fresh is worthwhile:
+
+1. Create a sub-project folder for the current work and move domain-specific files into it
+2. Create Workflow Files/ and move Clock/, Config/, Session Logs/ into it
+3. Create Workflow Files/HANDOFF.txt and REFERENCE.txt
+4. Ensure Inbox/ stays at root
+5. Rewrite WORKFLOW.txt: lean version with handoff-driven startup procedure
+6. Simplify project instructions to the three-block format
+7. Update Config backup to match
+
+---
+
+## Known Limitations
+
+**Filesystem required for full functionality.** Currently requires an AI application with filesystem read/write access. In the Claude ecosystem, this means the Desktop app with the Filesystem extension (macOS and Windows). Web and mobile interfaces don't have filesystem access. The workspace degrades gracefully: chats note what needs syncing when desktop access is restored.
+
+**Chat search is typically project-scoped.** Built-in chat search usually only sees conversations within the current project. It will never find anything from another project. But the filesystem spans everything. When you need cross-project context, the AI reads the other project's files directly.
+
+**Reference file design is domain-specific.** This architecture prescribes where domain files live (inside their sub-project) but not what those files should be. Each domain needs its own reference file design shaped by the work.

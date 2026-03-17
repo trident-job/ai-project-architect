@@ -1,0 +1,125 @@
+# AI Project Architect
+
+A design pattern for sustained knowledge work with AI assistants, using only native tools.
+
+## The problem
+
+AI project features aren't built for ongoing work. Memory is unpredictable, project files are static uploads with cache issues, there's no reliable continuity between chats, no way to share findings across projects, and no mechanism for the AI to maintain its own working documents across conversations.
+
+If you've noticed your AI getting less reliable as chats get longer, or found yourself re-explaining context every time you start a new conversation, you've hit the walls this system was built to solve.
+
+## What this is
+
+A workspace architecture that turns an AI chat application into a persistent project environment. It gives the AI a living project directory on your local drive that it reads, writes, and maintains directly. The AI manages the project through conversation. Agentic tools handle bounded mechanical tasks like file organization. All access the same filesystem, and the workspace gives them shared context.
+
+No external tools, no code to install, no API integrations. Everything here works with features already built into your AI application.
+
+This was developed with and currently targets **Claude Desktop** (using the Filesystem extension, Chat, Cowork, and Code). The architectural principles (handoff-driven orientation, context cost optimization, session logging, temporal awareness, indexed collections) are transferable to any AI assistant with filesystem access. As other AI applications gain persistent tool use, this pattern should adapt to them with minimal changes to the tool-specific implementation details.
+
+The design is optimized for a core constraint: everything the AI reads at startup stays in context for the entire conversation and gets reprocessed every turn. A 50 KB startup across 20 turns means that content is processed roughly 20 times. Every design decision balances orientation quality against context cost.
+
+The result: the AI picks up exactly where you left off in every new chat, maintains its own session logs and documentation, knows what time it is and how long it's been since you last worked together, and keeps startup reads around 15 KB (down from 50+ KB before optimizing).
+
+## The workspace structure
+
+Every project follows the same layout:
+
+```
+[Project]/
+  WORKFLOW.txt              ← entry point, read at startup
+  Inbox/                    ← async file exchange between you and the AI
+  Workflow Files/
+    HANDOFF.txt             ← state snapshot, overwritten constantly
+    REFERENCE.txt           ← on-demand detail, NOT read at startup
+    TASKS.txt               ← active items only, on-demand
+    Clock/timestamp.txt     ← temporal awareness mechanism
+    Lessons/
+      LESSONS_INDEX.txt     ← index for accumulated knowledge
+      [topic].txt
+    Session Logs/
+      Session_XXX.txt
+  [Sub-Project A]/          ← shaped by the domain
+  [Sub-Project B]/
+```
+
+**WORKFLOW.txt** is lean. Startup procedure, project description, temporal awareness, logging rules, and user preferences the AI has learned over time. Only what earns its place in every context window.
+
+**HANDOFF.txt** is the continuity mechanism. A compact state snapshot covering where every area of the project stands, what's pending, and reading pointers for depth. Gets overwritten every time the AI logs anything. Chats can hit context limits without warning, so nothing important waits for "end of session."
+
+**Session logs** capture decisions, state changes, and reasoning. Not process narration. The handoff tells you where things stand; the log tells you how they got there.
+
+**The Clock file** gives the AI temporal awareness. The AI modifies the file and reads its metadata to determine the current time and how long since the last session. No more confusion about whether it's been an hour or three days.
+
+**Indexed collections** handle anything that accumulates. An index file plus individual topic files, like a card catalog. The AI reads the index to know what exists, pulls only what it needs. Cost is about 1 KB for the index regardless of how large the collection grows.
+
+**Startup reads about 15 KB total:** WORKFLOW.txt, HANDOFF.txt, the most recent session log, and an inbox listing.
+
+## How to use this
+
+### What you'll need
+
+- **Claude Desktop app** (macOS or Windows) with the Filesystem extension enabled
+- **A directory on your local drive** for project files
+
+This is built for people who manage projects through AI chat and want persistent continuity between conversations. The full system works in the Claude Desktop app, where Chat manages the project, Cowork handles mechanical tasks, and Code handles development work, all sharing the same filesystem. It does not work on web or mobile interfaces (no filesystem access), but the workspace degrades gracefully: chats on web or mobile note what needs syncing when you're back on desktop.
+
+### Quick start (Claude Desktop)
+
+1. **Enable the Filesystem extension** in the Claude Desktop app. Go to Settings, find the Filesystem extension, turn it on, and grant it access to the directory where you want your project files to live.
+
+2. **Give Claude the architecture document.** In a new or existing project, start a chat and give Claude the [workspace architecture document](workspace-architecture.md). Tell it about your project and ask it to build the workspace structure for you.
+
+That's it. Claude will scaffold the directory, create the files, and provide you with the project instructions to paste into your project settings (customized with your actual file path). From then on, every new chat in that project reads the workspace and picks up where the last one left off.
+
+The [project instructions template](project-instructions.md) is included in this repo for reference, but you don't need to set it up manually. Claude will generate the correct version for your project after reading the architecture document.
+
+### Adapting to other AI applications
+
+The workspace architecture document is designed to be understood by any capable AI assistant. If your AI application provides filesystem read/write access, you can give it the architecture document and ask it to build the workspace. The tool-specific details (MCP tool names, project instructions format) will need translation to your platform, but the structural design, principles, and file organization are platform-independent.
+
+### Scaling up
+
+The architecture works for a single project or many. Each project gets its own directory and AI project. For multiple projects, you can optionally add a coordinator project that tracks cross-project changes and maintains a shared knowledge base (documented in the architecture document under "Knowledge Architecture").
+
+## What's in this repo
+
+| File | What it is |
+|------|-----------|
+| [workspace-architecture.md](workspace-architecture.md) | The complete workspace design. This is the core document. Give it to your AI to build your workspace. |
+| [project-instructions.md](project-instructions.md) | The text you paste into Claude's project settings. Three lines, identical for every project except the file path. Adapt for other AI platforms. |
+| [patterns/](patterns/) | Supporting patterns and techniques developed through use. Optional reading that adds depth as your workspace matures. |
+
+### Patterns
+
+These are standalone documents, each covering one technique. They're not required to get started but become valuable as you use the workspace:
+
+- **[Temporal Awareness](patterns/temporal-awareness.md)**: How the AI determines the current time and detects gaps between sessions using a persistent Clock file and filesystem metadata.
+- **[Evolving State in Handoffs](patterns/evolving-state.md)**: Replacing binary open/closed tracking with state-of-thinking capture for topics that develop across sessions.
+- **[Sub-Project Archive Pattern](patterns/archive-pattern.md)**: How to freeze completed sub-projects while keeping them discoverable.
+- **[Agentic Task Delegation](patterns/agentic-delegation.md)**: Delegating bounded mechanical tasks to agentic tools while retaining strategic oversight in chat.
+
+## Design principles
+
+A few things that shaped the architecture, learned through building it:
+
+**Instructions must be action sequences, not conditions.** "When X happens, do Y" fails because AI assistants don't reliably check conditions before acting. "Do A to check for X. If X, then do Y" works because the check is itself an action.
+
+**Orientation and archive are separate functions.** HANDOFF.txt orients. Session logs archive. Loading session logs at startup conflates the two and wastes context on history that doesn't help the current chat.
+
+**Directory structure is UX.** When you open a project folder, the visual hierarchy should communicate the project's organization without explanation. Sub-project folders tell you what the project does. Infrastructure is visually subordinate.
+
+**Start new chats often.** With this system you lose nothing by starting fresh. Every new chat reads the handoff, checks the inbox, and continues where the last one left off. Chats stay responsive and the context window stays wide.
+
+**Project memory masks bad instructions.** AI assistants compensate for inadequate instructions using memory from prior chats. Always test structural changes in fresh chats and sometimes fresh projects.
+
+## Background
+
+This system was built by a non-developer through iterative design and daily use across multiple AI projects.
+
+## Status
+
+Active development. The architecture is stable and tested across multiple projects spanning different domains. Supporting patterns continue to be refined.
+
+## License
+
+[MIT](LICENSE)
