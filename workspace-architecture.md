@@ -22,10 +22,11 @@ This document describes a workspace architecture that balances orientation quali
 [Project]/
   WORKFLOW.txt              startup procedure, project
                             description, temporal awareness,
-                            logging guidance, user preferences.
+                            logging guidance, project context.
                             Only what earns its place in every
                             context window.
-  Inbox/                    asynchronous intake (see below)
+  Inbox/                    asynchronous interface, both
+                            directions (see below)
   Workflow Files/           all project infrastructure
     HANDOFF.txt             current state,
                             priorities, reading pointers.
@@ -40,7 +41,7 @@ This document describes a workspace architecture that balances orientation quali
       LESSONS_INDEX.txt     routing index
       [topic].txt           one file per topic
     Session Logs/           project-wide, on-demand
-      Session_XXX.txt       one per chat, area-tagged
+      Session_XXX.txt       per unit of work, sequential
   [Sub-Project A]/          functional area
     [REFERENCE].txt         domain-specific procedures
     [domain folders]        shaped by the work
@@ -53,9 +54,13 @@ The root shows: what the project does (sub-project folders), the entry point (WO
 
 ## The Inbox
 
-Inbox/ at the project root is the asynchronous interface between the user and the project. The user drops files here between sessions: emails saved as text, documents to process, screenshots, reference material, delegation briefs, anything that a project needs to see. The project notices them at startup and asks about them.
+Inbox/ at the project root is the asynchronous interface between the user and the project, in both directions.
 
-This is a foundational workflow: the user encounters something relevant, saves it to the appropriate project's inbox, and moves on. Later, when a session opens, the AI sees the item and initiates processing. The inbox bridges the gap between when work arrives and when the project is active.
+The user drops files here between sessions: emails saved as text, documents to process, screenshots, reference material, delegation briefs, anything that a project needs to see. The project notices them at startup and asks about them.
+
+The AI writes to the Inbox when it has something for the user: drafts for review, items flagged for deletion, cross-project delegation notes, or anything that needs the user's attention outside the current conversation.
+
+This is a foundational workflow in both directions. The user encounters something relevant, saves it to the appropriate project's inbox, and moves on. The AI produces a draft or flags a file and places it in the inbox for the user to find. The inbox bridges the gap between when work arrives and when the project is active, regardless of which direction it flows.
 
 Inbox items are listed (filenames only) at startup as step 4. They are not read at startup. The listing surfaces what's waiting, and the chat processes items when directed or when relevant to the session's work.
 
@@ -67,16 +72,17 @@ See INBOX PROCESSING in Key Principles for how to assess items once processing b
 
 ## Startup
 
-Startup reads four things:
+Startup reads five things:
 
 1. **WORKFLOW.txt** (~4-6 KB)
 2. **Workflow Files/HANDOFF.txt** (~1-2 KB)
-3. **Most recent session log** (~5-15 KB)
+3. **Session log(s) identified by the handoff** (~5-15 KB). If no specific pointer, read the highest-numbered log. If the project is new with no logs, skip.
 4. **Inbox/ listing** (filenames only)
+5. **Check the clock and session age** (see Temporal Awareness)
 
-Total: ~12-23 KB. Down from 30-55 KB under the old "read three most recent session logs" heuristic.
+Total: ~12-23 KB of reads, plus the clock check. Down from 30-55 KB under the old "read three most recent session logs" heuristic.
 
-The handoff gives the current state snapshot: where things stand per functional area, priorities, what to read for depth. The most recent session log gives the narrative: how things got to the current state, what was tried, what was decided and why. Together they orient a fresh chat to continue the work with both the snapshot and the story.
+The handoff gives the current state snapshot: where things stand per functional area, priorities, what to read for depth. The session log(s) give the narrative: how things got to the current state, what was tried, what was decided and why. Together they orient a fresh chat to continue the work with both the snapshot and the story. The clock check gives temporal context: what day and time it is, whether this is a continuation or a return after hours or days.
 
 The session log was added back after testing showed that handoff-only startup lost narrative continuity. A chat reading only the handoff knew what the current state was but not how it got there, causing it to fall back on stale memory and past chat search. One session log restores the narrative thread at modest cost (~5-15 KB) while still achieving 50-70% reduction from the old three-log startup.
 
@@ -96,6 +102,42 @@ Last active: Session 012. For full state, read
 Once oriented, the chat loads additional session logs, sub-project reference files, lessons, and task queues on demand.
 
 The user already knows their project. They need orientation (where we left off, what's pending), not education (what each item is about).
+
+---
+
+## WORKFLOW Section Registry
+
+WORKFLOW.txt is the only file read in every context window. Its sections should be standardized across all projects to maintain a consistent baseline. If you're running multiple projects, designate one as the owner of the canonical section list, ordering, and mechanical text.
+
+Before adding a section to a WORKFLOW, check the registry. If the content fits an existing section, put it there. If no section fits and the content genuinely needs to be in every context window, evaluate it as a potential registry expansion. Don't invent WORKFLOW sections ad hoc within individual projects.
+
+A baseline registry with 10 sections in fixed order:
+
+| # | Section | Status |
+|---|---------|--------|
+| 1 | Session Startup Procedure | Universal |
+| 2 | Base Path | Project-specific |
+| 3 | What This Project Does | Project-specific |
+| 4 | Sub-Project Activation | Universal pattern, project-specific pointers |
+| 5 | Task Queue | Optional |
+| 6 | Session Logs | Universal |
+| 7 | Temporal Awareness | Universal |
+| 8 | Inbox | Universal |
+| 9 | Shared Knowledge Base | Universal |
+| 10 | Project Context | Project-specific |
+
+Universal sections carry identical mechanical text across all projects. Project-specific sections use the same heading and position but carry project-specific content. Optional sections are included only when needed.
+
+Additional sections may be prescribed by shared patterns (e.g., an Archive section prescribed by the archive pattern, sitting after Sub-Project Activation). These are governed by their pattern documentation, not the base registry.
+
+A routing flowchart for new content:
+
+- Needed every session, project-specific context → **Project Context** section
+- Needed every session, mechanical/procedural → check the registry for an existing section
+- Applies to all projects, behavioral/personal → account-wide user preferences
+- Needed only when working a specific sub-project → sub-project reference file
+- Reference material, loaded on demand → REFERENCE.txt
+- New section type not in the registry → evaluate for registry expansion
 
 ---
 
@@ -158,13 +200,17 @@ Handoff notes flag known fragilities, not just steps. A task with hidden complex
 
 ### Lean Workflow, On-Demand Reference
 
-WORKFLOW.txt keeps only what earns its place in every context window: startup procedure, project description, temporal awareness, logging guidance, user preferences.
+WORKFLOW.txt keeps only what earns its place in every context window: startup procedure, project description, temporal awareness, logging guidance, project context.
 
 Everything else (file structure listings, detailed format specs, procedural notes) moves to Workflow Files/REFERENCE.txt, read on demand. This separation keeps the startup read small while preserving access to detailed reference material.
 
 ### Concise Logging
 
 Session logs capture every decision, state change, and rationale. They do not narrate the conversational process.
+
+Logs are per unit of work, not per chat. A single chat may produce multiple log files; a brief chat may produce one small one. Numbering is sequential across the project.
+
+Entry format: each entry begins with a header line: `[Date, ~Time Timezone] TOPIC`
 
 Thoroughness applies to coverage (what is captured). Conciseness applies to expression (how it is written). These are not in tension.
 
@@ -173,6 +219,8 @@ Good: "Moved Q1 reports into Client A sub-project. Reduces root clutter, reports
 Unnecessary: "We discussed whether to keep the Q1 reports at root level. The user pointed out they're client-specific. We agreed moving them made more sense."
 
 Reasoning IS worth capturing when a decision might be revisited: "Chose X over Y because Z." Process narration ("first we considered A, then B") is not, unless the alternatives themselves are important context.
+
+Log in coherent pieces at natural checkpoints. Write frequently; never defer to end of session. A growing log is a signal to write more often, not to keep appending. Start a new log file when a coherent entry is complete and a new unit of work begins.
 
 Every time a log entry is written, also overwrite HANDOFF.txt. Both writes happen together.
 
@@ -198,9 +246,11 @@ See the companion pattern: [Evolving State in Handoffs](patterns/evolving-state.
 
 One sequence, tagged by functional area. This maintains the project narrative and avoids duplicating logging infrastructure. Location: Workflow Files/Session Logs/.
 
-### User Preferences Accumulate
+### Project Context Accumulates
 
-WORKFLOW.txt includes a section for user preferences that grows through use. When the user corrects a behavior that reflects a persistent preference, the AI writes it immediately. The project learns its user over time.
+WORKFLOW.txt includes a PROJECT CONTEXT section for project-specific material that earns its place in every context window but is not covered by account-wide user preferences. When the user corrects a project-specific behavior, the AI writes it here immediately. The project learns its operational context over time.
+
+Account-wide preferences (formatting, communication style, interaction patterns) are already delivered via the AI application's user preference system and should not be duplicated in the WORKFLOW.
 
 ---
 

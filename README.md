@@ -55,8 +55,8 @@ Optional coordinator project with a shared knowledge base. Projects discover tec
 **Graceful degradation.**<br>
 Full features on desktop. On web or mobile, chats note what needs syncing when you're back.
 
-**Preference learning.**<br>
-The project accumulates your working preferences over time and applies them automatically.
+**Project context accumulates.**<br>
+Project-specific operational context grows over time. Domain rules, conventions, and behavioral corrections are captured as they emerge.
 
 ## The workspace structure
 
@@ -65,7 +65,7 @@ Every project follows the same layout:
 ```
 [Project]/
   WORKFLOW.txt              ← entry point, read at startup
-  Inbox/                    ← async file exchange between you and the AI
+  Inbox/                    ← async interface, both directions
   Workflow Files/
     HANDOFF.txt             ← state snapshot, overwritten constantly
     REFERENCE.txt           ← on-demand detail, NOT read at startup
@@ -80,7 +80,7 @@ Every project follows the same layout:
   [Sub-Project B]/
 ```
 
-**WORKFLOW.txt** is lean. Startup procedure, project description, temporal awareness, logging rules, and user preferences the AI has learned over time. Only what earns its place in every context window.
+**WORKFLOW.txt** is lean. Startup procedure, project description, temporal awareness, logging rules, and project-specific context. Only what earns its place in every context window.
 
 **HANDOFF.txt** is the continuity mechanism. A compact state snapshot covering where every area of the project stands, what's pending, and reading pointers for depth. Gets overwritten every time the AI logs anything. Chats can hit context limits without warning, so nothing important waits for "end of session."
 
@@ -90,7 +90,7 @@ Every project follows the same layout:
 
 **Indexed collections** handle anything that accumulates. An index file plus individual topic files, like a card catalog. The AI reads the index to know what exists, pulls only what it needs. Cost is about 1 KB for the index regardless of how large the collection grows.
 
-**Startup reads about 15 KB total:** WORKFLOW.txt, HANDOFF.txt, the most recent session log, and an inbox listing.
+**Startup reads about 15 KB total:** WORKFLOW.txt, HANDOFF.txt, session log(s) identified by the handoff, an inbox listing, and a clock check.
 
 ## How to use this
 
