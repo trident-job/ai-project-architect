@@ -68,7 +68,7 @@ Every project follows the same layout:
   Inbox/                    ← async interface, both directions
   Workflow Files/
     HANDOFF.txt             ← state snapshot, overwritten constantly
-    REFERENCE.txt           ← on-demand detail, NOT read at startup
+    REFERENCE.txt           ← on-demand: structure, procedures, sub-project pointers
     TASKS.txt               ← active items only, on-demand
     Clock/timestamp.txt     ← temporal awareness mechanism
     Lessons/
@@ -77,6 +77,8 @@ Every project follows the same layout:
     Session Logs/
       Session_XXX.txt
   [Sub-Project A]/          ← shaped by the domain
+    [SubProj]_STATUS.txt    ← orientation (current state)
+    [SubProj]_REFERENCE.txt ← domain knowledge
   [Sub-Project B]/
 ```
 

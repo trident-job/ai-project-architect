@@ -31,8 +31,10 @@ This document describes a workspace architecture that balances orientation quali
     HANDOFF.txt             current state,
                             priorities, reading pointers.
                             Overwritten with every log entry.
-    REFERENCE.txt           on-demand detail: file structure,
-                            format specs, detailed procedures.
+    REFERENCE.txt           on-demand: file structure, format
+                            specs, procedures, sub-project
+                            pointers. Not a container for
+                            domain knowledge.
     TASKS.txt               active items only, on-demand.
     Clock/timestamp.txt     temporal awareness
     Config/
@@ -43,7 +45,9 @@ This document describes a workspace architecture that balances orientation quali
     Session Logs/           project-wide, on-demand
       Session_XXX.txt       per unit of work, sequential
   [Sub-Project A]/          functional area
-    [REFERENCE].txt         domain-specific procedures
+    [SubProj]_STATUS.txt    orientation (current state)
+    [SubProj]_REFERENCE.txt domain knowledge (on demand)
+    [named domain files]    shaped by the work
     [domain folders]        shaped by the work
   [Sub-Project B]/          ...
 ```
@@ -136,7 +140,8 @@ A routing flowchart for new content:
 - Needed every session, mechanical/procedural → check the registry for an existing section
 - Applies to all projects, behavioral/personal → account-wide user preferences
 - Needed only when working a specific sub-project → sub-project reference file
-- Reference material, loaded on demand → REFERENCE.txt
+- Reference material, procedures, loaded on demand → REFERENCE.txt
+- Domain knowledge for a specific sub-project → a file inside the sub-project directory (REFERENCE.txt points to it, does not hold it)
 - New section type not in the registry → evaluate for registry expansion
 
 ---
@@ -202,7 +207,7 @@ Handoff notes flag known fragilities, not just steps. A task with hidden complex
 
 WORKFLOW.txt keeps only what earns its place in every context window: startup procedure, project description, temporal awareness, logging guidance, project context.
 
-Everything else (file structure listings, detailed format specs, procedural notes) moves to Workflow Files/REFERENCE.txt, read on demand. This separation keeps the startup read small while preserving access to detailed reference material.
+Everything else (file structure listings, detailed format specs, procedural notes, sub-project pointers) moves to Workflow Files/REFERENCE.txt, read on demand. REFERENCE.txt is infrastructure: it describes the project's file structure, points to sub-project files, and holds procedural notes. It is not a container for domain knowledge. Domain content belongs in sub-project files; REFERENCE.txt points to those files.
 
 ### Concise Logging
 
@@ -284,7 +289,9 @@ Naming follows the domain. A case folder has Resources/ with INDEX.txt. Project-
 
 Knowledge flows upward through three levels:
 
-**Sub-project reference files:** Domain-specific knowledge managed by each sub-project in whatever form serves the work. A client management sub-project has case files and communication logs. A research sub-project has analytical frameworks and source annotations. These are living documents that capture the current state of the sub-project's thinking.
+**Sub-project reference files:** Domain-specific knowledge managed by each sub-project in whatever form serves the work. A client management sub-project has case files and communication logs. A research sub-project has analytical frameworks and source annotations. A media sub-project has taste profiles and tracking lists. These are living documents that capture the current state of the sub-project's thinking.
+
+Domain knowledge always lives in sub-project files, not in the project-level REFERENCE.txt. When a sub-project accumulates context, write that content into a file inside the sub-project directory. The project-level REFERENCE.txt carries a pointer to the sub-project file and a one-line scope description — never a summary or duplication of the content itself.
 
 **Project operational lessons:** Cross-cutting knowledge that any sub-project might need. Tool quirks, workarounds, migration procedures, context cost behavior. Centralized in Workflow Files/Lessons/ with an index routing to topical files. When a sub-project discovers something operationally useful, it surfaces here.
 
@@ -304,9 +311,26 @@ The note should include: the observation itself, the source (which project and s
 
 ## Sub-Projects
 
-Each functional area gets its own directory at the project root. Inside, it has its own reference files and domain folders shaped by the nature of the work.
+Each functional area gets its own directory at the project root. This directory is the authoritative home for all domain knowledge in that area. Everything the AI learns about the domain — case data, research threads, tracking lists, analytical frameworks, procedural notes — is written into files inside the sub-project directory. The project-level REFERENCE.txt points to these files but never holds domain content itself.
 
 Always create at least one sub-project folder, even for single-focus projects, to establish the pattern and avoid restructuring later.
+
+### Sub-Project Internal Structure
+
+A sub-project's internal structure mirrors the project level: an orientation file for current state, a reference file for accumulated domain knowledge, and domain folders shaped by the work. The same architectural logic that separates WORKFLOW.txt from REFERENCE.txt at the project level applies inside each sub-project.
+
+Standard file roles:
+
+- **[SubProject]_STATUS.txt** — Orientation. Current state, what's active, what's pending, known issues. Read at activation. Overwritten as state changes. This is the sub-project analog of HANDOFF.txt at the project level. Required for any sub-project with ongoing work spanning multiple sessions.
+- **[SubProject]_REFERENCE.txt** — Domain knowledge. Accumulated understanding, specifications, procedures, configurations consulted during work. Read on demand. Grows over time. When it grows large, apply the indexed collection pattern.
+- **[named domain files]** — Working documents shaped by the domain. Case folders, design briefs, tracking lists, configuration files, research notes. Named for what they contain (e.g., voice_config.txt, not config.txt).
+- **[domain folders]** — Cases/, Testing Reports/, Research/, etc. Shaped by the work.
+
+**Naming rules:** Files inside sub-project directories must include the sub-project name or a domain-specific identifier. No generic names like REFERENCE.txt or STATUS.txt — these collide with the project-level files and with each other when read into context. A chat reading VOICEMODE_STATUS.txt or SUPPLEMENTS_REFERENCE.txt knows immediately what sub-project it belongs to. Exception: a sub-project with a single primary file may use a content-descriptive name instead (e.g., trust_analysis.txt). The test is whether the filename alone identifies the sub-project.
+
+**Development trajectory:** A new sub-project starts with a status file and possibly a reference file. As work accumulates, named domain files and folders emerge. As domain files grow, the indexed collection pattern applies. The AI should recognize when infrastructure needs to develop and build it, following the patterns in this document and looking at how peer sub-projects have organized their work.
+
+Standing rule: when a sub-project directory is created, seed it with at least a status file immediately. An empty sub-project directory has no gravity — domain knowledge will flow to the project-level REFERENCE.txt instead, because that file already exists and has structure. A seeded file reverses that pull.
 
 Sub-project structure depends on the shape of the work:
 
