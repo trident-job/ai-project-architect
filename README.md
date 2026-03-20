@@ -14,7 +14,7 @@ A workspace architecture that turns an AI chat application into a persistent pro
 
 No external tools, no code to install, no API integrations. Everything here works with features already built into your AI application.
 
-This was developed with and currently targets **Claude Desktop** (using the Filesystem extension, Chat, Cowork, and Code). The architectural principles (handoff-driven orientation, context cost optimization, session logging, temporal awareness, indexed collections) are transferable to any AI assistant with filesystem access. As other AI applications gain persistent tool use, this pattern should adapt to them with minimal changes to the tool-specific implementation details.
+This was developed with and currently targets **Claude Desktop** (using the Filesystem extension and Claude Desktop's Chat, Cowork, and Code modes). The architectural principles (handoff-driven orientation, context cost optimization, session logging, temporal awareness, indexed collections) are transferable to any AI assistant with filesystem access. As other AI applications gain persistent tool use, this pattern should adapt to them with minimal changes to the tool-specific implementation details.
 
 The design is optimized for a core constraint: everything the AI reads at startup stays in context for the entire conversation and gets reprocessed every turn. A 50 KB startup across 20 turns means that content is processed roughly 20 times. Every design decision balances orientation quality against context cost.
 
@@ -38,7 +38,7 @@ The AI logs decisions, reasoning, and state changes as you work, without being a
 Drop files in the project inbox between sessions. The AI notices them when you return and processes them in context.
 
 **Accumulated knowledge.**<br>
-Operational lessons, reference materials, and project-specific knowledge grow over time without ballooning context cost.
+Operational lessons, reference materials, domain rules, and behavioral corrections grow over time without ballooning context cost.
 
 **Task delegation.**<br>
 Hand off mechanical work (file organization, indexing, batch processing) to agentic tools sharing the same filesystem. Chat retains strategic oversight.
@@ -54,9 +54,6 @@ Optional coordinator project with a shared knowledge base. Projects discover tec
 
 **Graceful degradation.**<br>
 Full features on desktop. On web or mobile, chats note what needs syncing when you're back.
-
-**Project context accumulates.**<br>
-Project-specific operational context grows over time. Domain rules, conventions, and behavioral corrections are captured as they emerge.
 
 ## The workspace structure
 
@@ -88,7 +85,7 @@ Every project follows the same layout:
 
 **Session logs** capture decisions, state changes, and reasoning. Not process narration. The handoff tells you where things stand; the log tells you how they got there.
 
-**The Clock file** gives the AI temporal awareness. The AI modifies the file and reads its metadata to determine the current time and how long since the last session. No more confusion about whether it's been an hour or three days.
+**The Clock file** gives the AI temporal awareness. The AI writes to the file (establishing the current time) and reads its last-modified metadata to calculate how long since the previous session. No more confusion about whether it's been an hour or three days.
 
 **Indexed collections** handle anything that accumulates. An index file plus individual topic files, like a card catalog. The AI reads the index to know what exists, pulls only what it needs. Cost is about 1 KB for the index regardless of how large the collection grows.
 
