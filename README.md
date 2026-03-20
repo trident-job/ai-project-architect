@@ -99,15 +99,19 @@ Every project follows the same layout:
 ### What you'll need
 
 - **Claude Desktop app** (macOS or Windows) with the Filesystem extension enabled
-- **A directory on your local drive** for project files
+- **A single dedicated directory on your local drive** where all project directories will live (e.g., `AI Projects` on your Desktop)
 
 This is built for people who manage projects through AI chat and want persistent continuity between conversations. The full system works in the Claude Desktop app, where Chat manages the project, Cowork handles mechanical tasks, and Code handles development work, all sharing the same filesystem. It does not work on web or mobile interfaces (no filesystem access), but the workspace degrades gracefully: chats on web or mobile note what needs syncing when you're back on desktop.
 
 ### Quick start (Claude Desktop)
 
-1. **Enable the Filesystem extension** in the Claude Desktop app. Go to Settings, find the Filesystem extension, turn it on, and grant it access to the directory where you want your project files to live.
+1. **Create a dedicated root directory** for all your project files. This is a single folder (e.g., `AI Projects` on your Desktop) where every project directory will live. Starting with an empty directory is cleanest.
 
-2. **Give Claude the architecture document.** In a new or existing project, start a chat and give Claude the [workspace architecture document](workspace-architecture.md). Tell it about your project and ask it to build the workspace structure for you.
+2. **Enable the Filesystem extension** in the Claude Desktop app. Go to Settings, find the Filesystem extension, turn it on, and grant it access to your root directory. The extension grants access to one directory and everything inside it, with no finer-grained control. This means every project can read every other project's files, which is by design: it enables cross-project coordination, the shared knowledge base, and delegation via inbox notes.
+
+3. **Set tool permissions to Always Allow.** In Settings under Tool Permissions, set the Filesystem tools to "Always allow." The workspace involves frequent file reads and writes during normal conversation. If permissions are set to ask every time, you'll be approving dozens of tool calls per session. Always Allow lets the AI work fluidly.
+
+4. **Give Claude the architecture document.** In a new or existing project, start a chat and give Claude the [workspace architecture document](workspace-architecture.md). Tell it about your project and ask it to build the workspace structure for you.
 
 That's it. Claude will scaffold the directory, create the files, and provide you with the project instructions to paste into your project settings (customized with your actual file path). From then on, every new chat in that project reads the workspace and picks up where the last one left off.
 

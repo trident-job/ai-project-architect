@@ -269,7 +269,11 @@ The indexed pattern avoids this. Like a card catalog in a library, read the inde
 
 This pattern applies anywhere items accumulate and get looked up selectively: operational lessons, case evidence, research sources, reference materials, design decisions.
 
-Standing rule: any folder created to accumulate files gets an INDEX.txt at creation time, not retroactively. Creating it empty or with a placeholder costs nothing and ensures the pattern is never missed.
+Standing rule: any folder where a reader needs to discover and selectively access its contents gets an INDEX.txt at creation time, not retroactively. This includes domain folders, reference collections, case evidence, research materials — anywhere a reader would otherwise need to open every file to know what's there. It does not include infrastructure folders with architecturally defined contents (Workflow Files/, Session Logs/, Config/) where the files have known roles.
+
+The reader is not just the current chat. Indexes serve future chats (token-efficient retrieval), the user browsing the folder (directory design as UX extends into folder contents), other projects reading cross-project files, and any new AI account or system absorbing the project from the filesystem (portability). The project filesystem is designed to be portable — a new account with the project instructions and the filesystem can pick up the work. An index in every document folder is what makes that practical without brute-force reading.
+
+Indexes serve retrieval, not just growth. A static folder with five files benefits from an index just as much as a growing one. Creating an index empty or with a placeholder costs nothing and ensures the pattern is never missed. The failure mode is a chat judging that a folder doesn't need an index because it won't grow.
 
 The structure:
 
@@ -306,6 +310,24 @@ When a project chat discovers something cross-cutting during its own domain work
 Not every cross-cutting observation warrants a new shared document. Many are feedback on existing infrastructure: a note that improves an existing doc, a line item for a project's lessons file, or a correction to a shared template. The routing mechanism is the same regardless of destination. The coordinator has the cross-project view to decide.
 
 The note should include: the observation itself, the source (which project and session), and a suggestion for where it might land. The suggestion is advisory. The coordinator may route it differently based on its view across all projects.
+
+### The Coordinator Project
+
+When you run multiple projects, you can create one project as a meta-project coordinator to develop and maintain the system they all share. It uses the same workspace architecture as every other project. Its domain work is the architecture itself.
+
+The coordinator is where you do design work on the workspace system, maintain the shared knowledge base, propagate structural changes, audit projects for consistency, and manage cross-project delegations. It also serves as a gateway for cross-project visibility: summarizing task queues across all projects, helping prioritize between competing demands in different projects, and giving you a single place to ask "what's pending across everything?" Since all project directories live under the same root (a requirement of the Filesystem extension's permissions model), every project can read every other project's files. The coordinator uses this to read handoffs, task queues, and inboxes across all projects, write delegation notes, and verify that changes have been applied.
+
+A coordinator project is not required. A single project or a few projects work fine without one. The coordinator becomes valuable when you have enough projects that cross-cutting concerns emerge: shared patterns that need to stay consistent, design changes that affect multiple projects, observations from one project that would benefit others.
+
+Building a coordinator:
+
+- Create it like any other project with the same workspace architecture.
+- Its sub-project covers system-level work: architecture design, shared knowledge base maintenance, cross-project tracking, and any active design efforts.
+- Its WORKFLOW describes the coordinator role and lists all the projects it manages.
+- It maintains the shared knowledge base (a directory of standalone documents covering patterns and techniques that any project can consult).
+- It uses the inbox mechanism in both directions: domain projects route cross-cutting observations to the coordinator's inbox, and the coordinator writes delegation notes to domain project inboxes.
+
+The coordinator's relationship to domain projects is consultative, not controlling. Domain projects are self-sufficient. They read the shared knowledge base, apply the architecture's principles, and use their own judgment. The coordinator improves the design and makes it available. It does not babysit individual projects.
 
 ---
 
