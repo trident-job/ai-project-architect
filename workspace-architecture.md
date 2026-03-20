@@ -229,6 +229,8 @@ Log in coherent pieces at natural checkpoints. Write frequently; never defer to 
 
 Every time a log entry is written, also overwrite HANDOFF.txt. Both writes happen together.
 
+When file operations change the project's directory structure (creating, moving, or renaming files or directories), verify that Workflow Files/REFERENCE.txt reflects the current structure.
+
 ### Inbox Processing: Check Before Assessing
 
 Before assessing an inbox item, check the project's existing work structure (sub-projects, case folders, task queues, archives) for related items. A fresh chat has no memory of past work. Directory listings are the recognition mechanism. Without this step, a chat may treat a familiar item as new, failing to connect it to work the project has already done.
@@ -451,4 +453,4 @@ The existing structure works well for its scope. Migrate when the project grows 
 
 **Chat search is typically project-scoped.** Built-in chat search usually only sees conversations within the current project. It will never find anything from another project. But the filesystem spans everything. When you need cross-project context, the AI reads the other project's files directly.
 
-**Reference file design is domain-specific.** This architecture prescribes where domain files live (inside their sub-project) but not what those files should be. Each domain needs its own reference file design shaped by the work.
+**Domain file design is domain-specific.** This architecture prescribes standard file roles inside sub-projects (STATUS for orientation, REFERENCE for domain knowledge) and naming conventions, but the specific content and additional domain files depend on the nature of the work.
