@@ -107,7 +107,7 @@ This is built for people who manage projects through AI chat and want persistent
 
 1. **Create a dedicated root directory** for all your project files. This is a single folder (e.g., `AI Projects` on your Desktop) where every project directory will live. Starting with an empty directory is cleanest.
 
-2. **Enable the Filesystem extension** in the Claude Desktop app. Go to Settings, find the Filesystem extension, turn it on, and grant it access to your root directory. The extension grants access to one directory and everything inside it, with no finer-grained control. This means every project can read every other project's files, which is by design: it enables cross-project coordination, the shared knowledge base, and delegation via inbox notes.
+2. **Enable the Filesystem extension** in the Claude Desktop app. Go to Settings, find the Filesystem extension, turn it on, and grant it access to this directory. The extension grants access to one directory and everything inside it, with no finer-grained control. This means every project can read every other project's files, which is by design: it enables cross-project coordination, the shared knowledge base, and delegation via inbox notes.
 
 3. **Set tool permissions to Always Allow.** In Settings under Tool Permissions, set the Filesystem tools to "Always allow." The workspace involves frequent file reads and writes during normal conversation. If permissions are set to ask every time, you'll be approving dozens of tool calls per session. Always Allow lets the AI work fluidly.
 
@@ -115,7 +115,7 @@ This is built for people who manage projects through AI chat and want persistent
 
 That's it. Claude will scaffold the directory, create the files, and provide you with the project instructions to paste into your project settings (customized with your actual file path). From then on, every new chat in that project reads the workspace and picks up where the last one left off.
 
-The [project instructions template](project-instructions.md) is included in this repo for reference, but you don't need to set it up manually. Claude will generate the correct version for your project after reading the architecture document.
+The [project instructions template](project-instructions.md) is included in this repo for reference. Claude will generate the correct version for your project (with your actual file path) after reading the architecture document. You then copy and paste it into your Claude.ai project settings — Claude can't write to that area itself.
 
 ### Adapting to other AI applications
 
