@@ -115,7 +115,7 @@ This is built for people who manage projects through AI chat and want persistent
 
 That's it. Claude will scaffold the directory, create the files, and provide you with the project instructions to paste into your project settings (customized with your actual file path). From then on, every new chat in that project reads the workspace and picks up where the last one left off.
 
-The [project instructions template](project-instructions.md) is included in this repo for reference. Claude will generate the correct version for your project (with your actual file path) after reading the architecture document. You then copy and paste it into your Claude.ai project settings — Claude can't write to that area itself.
+The [project instructions template](project-instructions.md) is included in this repo for reference. Claude will generate the correct version for your project (with your actual file path) after reading the architecture document. You then copy and paste it into your Claude.ai project settings. Claude can't write to that area itself.
 
 ### Adapting to other AI applications
 
