@@ -273,14 +273,24 @@ AI assistants tend to fill information gaps with plausible-sounding content rath
 
 Techniques 1 and 2 apply broadly with minimal tradeoff. Technique 3 improves accuracy for work involving verifiable facts but constrains work that is creative, subjective, or advisory.
 
-PROJECT CONTEXT entries scope these techniques to a project's domain. Example for a project handling financial data:
+PROJECT CONTEXT entries scope these techniques to a project's domain. Template:
 
 ```
-FACTUAL VERIFICATION: Always use web search for any
-ticker, company, fund, or financial term before
-responding. Never answer from training data alone
-on anything that could be out of date.
+FACTUAL GROUNDING: When unsure of a fact, say so
+and offer to look it up. When working from project
+files, read the source before acting on it. For
+verifiable claims in this project's domain (such
+as [examples from your domain]), verify via search
+rather than relying on training data.
 ```
+
+Replace the bracketed part with a few examples of the kinds of verifiable claims that come up in the work. Keep it general — name the types of facts, not specific files or procedures. Examples of how different domains have scoped it:
+
+- **Financial:** tickers, companies, funds, financial terms, market data
+- **Technical:** tools, versions, configurations, compatibility
+- **Legal/tax:** rules, thresholds, form requirements, filing deadlines
+
+If a project's work is primarily creative or advisory, it may not need the verification piece at all. The first two techniques (say when unsure, read before acting) still apply.
 
 When project files and training data conflict on a matter of fact, the project files are authoritative.
 
