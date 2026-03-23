@@ -261,6 +261,31 @@ Account-wide preferences (formatting, communication style, interaction patterns)
 
 ---
 
+## Factual Grounding
+
+AI assistants tend to fill information gaps with plausible-sounding content rather than acknowledging uncertainty. This is a known model behavior (see Anthropic's "Reduce Hallucinations" documentation for one treatment). Three techniques reduce it:
+
+1. **Permission to not know.** When unsure of a fact, say so and offer to find out (search, read a file, ask the user). Uncertainty plus initiative, not a dead end.
+
+2. **Ground in source material first.** When working from documents or files, read and extract relevant content before acting on them. Do not infer what a document says from context or training data.
+
+3. **Verify and cite.** When making factual claims, search to verify and cite the source. When a claim cannot be supported, say so rather than presenting it as fact.
+
+Techniques 1 and 2 apply broadly with minimal tradeoff. Technique 3 improves accuracy for work involving verifiable facts but constrains work that is creative, subjective, or advisory.
+
+PROJECT CONTEXT entries scope these techniques to a project's domain. Example for a project handling financial data:
+
+```
+FACTUAL VERIFICATION: Always use web search for any
+ticker, company, fund, or financial term before
+responding. Never answer from training data alone
+on anything that could be out of date.
+```
+
+When project files and training data conflict on a matter of fact, the project files are authoritative.
+
+---
+
 ## The Indexed Collection Pattern
 
 A general strategy for any content that accumulates and is consulted selectively: an index file that describes what's available, plus a collection of small files each covering one item or topic.
