@@ -290,6 +290,8 @@ Replace the bracketed part with a few examples of the kinds of verifiable claims
 - **Technical:** tools, versions, configurations, compatibility
 - **Legal/tax:** rules, thresholds, form requirements, filing deadlines
 
+If a project already has PROJECT CONTEXT entries covering verification, data accuracy, or source-of-truth rules, consolidate them into the single FACTUAL GROUNDING entry. One consistent entry, not scattered entries layered on top of each other.
+
 If a project's work is primarily creative or advisory, it may not need the verification piece at all. The first two techniques (say when unsure, read before acting) still apply.
 
 When project files and training data conflict on a matter of fact, the project files are authoritative.
